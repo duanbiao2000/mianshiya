@@ -33,22 +33,28 @@ export function addMeetQuestion(params: Partial<MeetQuestionType>) {
  * 分页搜索
  * @param params
  */
+/**
+ * 异步函数用于搜索会议问题相关的用户信息
+ * @param params 搜索参数对象，包含会议ID、问题关键词等用于搜索的信息
+ * @returns 返回一个Promise对象，解析为PageResult类型的结果，包含会议问题的用户信息列表和总数
+ */
 export async function searchMeetQuestions(
   params: MeetQuestionSearchParams,
 ): Promise<PageResult<MeetQuestionUserType>> {
-  return axios
-    .post('/meet-question/search', params)
-    .then((res: any) => {
-      console.log(`searchMeetQuestions succeed`, res);
-      return res;
-    })
-    .catch((e: any) => {
-      console.error('searchMeetQuestions error', e);
-      return {
-        data: [],
-        total: 0,
-      };
-    });
+  try {
+    // 使用axios发送POST请求到'/meet-question/search'，携带搜索参数
+    const response = await axios.post('/meet-question/search', params);
+    // 请求成功时，记录日志并返回响应结果
+    console.log(`searchMeetQuestions succeed`, response);
+    return response;
+  } catch (error) {
+    // 请求失败时，记录错误日志并返回一个包含空数组和总数为0的结果对象
+    console.error('searchMeetQuestions error', error);
+    return {
+      data: [],
+      total: 0,
+    };
+  }
 }
 
 /**

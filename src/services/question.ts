@@ -45,24 +45,48 @@ export function addQuestion(params: QuestionType) {
  * 从 ES 搜索题目
  * @param params
  */
+/**
+ * 异步函数searchQuestions用于搜索问题
+ * @param params QuestionSearchParams类型的参数，用于指定搜索条件
+ * @returns 返回一个Promise，解析为PageResult<QuestionType>类型的搜索结果
+ * 
+ * 该函数的主要逻辑是构造搜索条件并调用后端API进行搜索
+ * 1. 构造搜索条件condition，基于传入的params，默认条件为未删除状态
+ * 2. 设置默认的排序键和排序方向，如果params中未指定
+ * 3. 打印构造的搜索条件，以便于调试和日志记录
+ * 4. 调用axios.post向'/question/search'端点发送POST请求，携带构造的搜索条件
+ * 5. 请求成功后，打印成功信息并返回响应结果
+ * 6. 如果发生错误，打印错误信息并返回false表示搜索失败
+ */
 export async function searchQuestions(
   params: QuestionSearchParams,
 ): Promise<PageResult<QuestionType>> {
+  // 构造搜索条件，包括默认的未删除状态
   const condition = { isDelete: false, ...params };
+  
+  // 设置默认的排序键为'_score'，如果params中未指定
   if (!condition.orderKey) {
     condition.orderKey = '_score';
   }
+  
+  // 设置默认的排序方向为'desc'，如果params中未指定
   if (!condition.order) {
     condition.order = 'desc';
   }
+  
+  // 打印构造的搜索条件，便于调试
   console.log(condition);
+  
+  // 向'/question/search'端点发送POST请求，携带构造的搜索条件
   return axios
     .post('/question/search', condition)
     .then((res: any) => {
+      // 请求成功，打印成功信息并返回响应结果
       console.log(`searchQuestions s`, res);
       return res;
     })
     .catch((e: any) => {
+      // 请求失败，打印错误信息并返回false
       console.error(`searchQuestions e`, e);
       return false;
     });
@@ -72,17 +96,32 @@ export async function searchQuestions(
  * 分页搜索题目（直接调云数据库）
  * @param params
  */
+/**
+ * 异步函数：按页搜索问题
+ * 根据提供的参数，搜索相应页面的问题，并返回搜索结果
+ * 如果参数中的 pageSize 或 pageNum 小于1，返回空结果
+ * 通过 axios 发送 POST 请求进行搜索，成功则返回搜索结果，失败则返回空结果
+ * 
+ * @param params - 搜索参数对象，包含 pageSize 和 pageNum 等
+ * @returns 返回一个 Promise 对象，解析后的结果为 PageResult<QuestionType> 类型
+ */
 export async function searchQuestionsByPage(
   params: QuestionSearchParams,
 ): Promise<PageResult<QuestionType>> {
+  // 默认参数设置：如果未指定，则 pageSize 和 pageNum 分别默认为12和1
   const { pageSize = 12, pageNum = 1 } = params;
+  // 定义一个空结果对象，用于在搜索失败时返回
   const emptyResult = {
     data: [],
     total: 0,
   };
+
+  // 如果 pageSize 或 pageNum 小于1，直接返回空结果
   if (pageSize < 1 || pageNum < 1) {
     return emptyResult;
   }
+
+  // 发送 POST 请求搜索问题，成功或失败后分别处理结果
   return axios
     .post('/question/search/origin', params)
     .then((res: any) => {
@@ -100,24 +139,39 @@ export async function searchQuestionsByPage(
  * @param currentUser
  * @param params
  */
+/**
+ * 异步函数searchUserFavourQuestions用于查询当前用户收藏的问题列表
+ * 
+ * @param currentUser 当前用户的信息，包含收藏的问题ID
+ * @param params 问题查询参数，用于指定查询条件
+ * @returns 返回一个Promise，解析为分页结果，包含问题数据列表和总数
+ */
 export async function searchUserFavourQuestions(
   currentUser: CurrentUser,
   params: QuestionSearchParams,
 ): Promise<PageResult<QuestionType>> {
+  // 默认值，用于在用户未登录或无收藏问题时返回空数据列表和总数0
   const defaultValue = {
     data: [],
     total: 0,
   };
+
+  // 如果当前用户未登录，则返回默认值
   if (!currentUser) {
     return defaultValue;
   }
+
+  // 如果当前用户未收藏任何问题，则返回默认值
   if (!currentUser?.favourQuestionIds || currentUser.favourQuestionIds.length === 0) {
     return defaultValue;
   }
 
+  // 设置查询参数，指定查询用户收藏的问题，且通过审核
   params.userId = undefined;
   params._ids = currentUser.favourQuestionIds;
   params.reviewStatus = reviewStatusEnum.PASS;
+
+  // 根据设置的查询参数，调用函数查询分页问题数据并返回结果
   return searchQuestionsByPage(params);
 }
 

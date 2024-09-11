@@ -31,6 +31,7 @@ const AddMeetQuestionModal: React.FC<AddMeetQuestionModalProps> = (props) => {
   const [form] = Form.useForm();
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [meetQuestionId, setMeetQuestionId] = useState<string>();
+  // 使用模型中的初始状态
   const { initialState } = useModel('@@initialState');
   const { currentUser = {} as CurrentUser } = initialState || {};
   const { tagsMap } = useModel('tag');
